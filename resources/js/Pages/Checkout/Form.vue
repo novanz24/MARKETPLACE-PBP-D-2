@@ -1,35 +1,77 @@
 <script setup>
-import { useForm } from '@inertiajs/vue3'
-import FormError from '@/Components/FormError.vue'
+import { Head, useForm } from '@inertiajs/vue3';
+import AppLayout from '@/Layouts/AppLayout.vue';
+import InputError from '@/Components/InputError.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
 
-const props = defineProps({ total: Number })
+// Menerima props 'total' dari CheckoutController
+const props = defineProps({
+    total: Number,
+});
 
-const form = useForm({ address_text: '' })
+// Menggunakan useForm untuk mengelola data form
+const form = useForm({
+    address_text: '',
+});
 
-const submit = () => {
-  if (!form.address_text || form.address_text.length < 10) {
-    form.errors.address_text = 'Alamat minimal 10 karakter'
-    return
-  }
-  form.post('/checkout')
-}
+// Fungsi untuk mengirim form checkout
+const submitCheckout = () => {
+    form.post(route('checkout.store'));
+};
+
+// Fungsi untuk format harga
+const formatCurrency = (value) => {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+    }).format(value);
+};
 </script>
 
 <template>
-  <div class="max-w-xl mx-auto p-6">
-    <h2 class="text-xl font-semibold mb-3">Checkout</h2>
-    <p class="mb-3">Total: <b>Rp {{ Number(total).toLocaleString() }}</b></p>
+    <Head title="Checkout" />
 
-    <form @submit.prevent="submit" class="space-y-3">
-      <textarea v-model.trim="form.address_text" required rows="4"
-                class="w-full border rounded p-2"
-                placeholder="Alamat lengkap pengiriman"></textarea>
-      <FormError :msg="form.errors.address_text" />
-      <button class="bg-black text-white px-4 py-2 rounded" :disabled="form.processing">
-        Buat Pesanan
-      </button>
-    </form>
+    <AppLayout>
+        <div class="py-12">
+            <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6 md:p-8 text-gray-900">
+                        <h2 class="text-2xl font-bold mb-6">Formulir Checkout</h2>
 
-    <p v-if="$page.props.flash?.ok" class="text-green-700 mt-3">{{ $page.props.flash.ok }}</p>
-  </div>
+                        <form @submit.prevent="submitCheckout">
+                            <div>
+                                <label for="address_text" class="block text-sm font-medium text-gray-700">
+                                    Alamat Lengkap Pengiriman
+                                </label>
+                                <textarea
+                                    id="address_text"
+                                    v-model="form.address_text"
+                                    rows="4"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    placeholder="Contoh: Jl. Pahlawan No. 123, Kelurahan Mugassari, Kecamatan Semarang Selatan, Kota Semarang, Jawa Tengah 50243"
+                                    required
+                                ></textarea>
+                                <InputError class="mt-2" :message="form.errors.address_text" />
+                            </div>
+
+                            <div class="mt-8 pt-4 border-t">
+                                <h3 class="text-lg font-medium">Ringkasan Pesanan</h3>
+                                <div class="mt-2 flex justify-between items-center">
+                                    <p class="text-gray-600">Total Belanja:</p>
+                                    <p class="font-bold text-xl">{{ formatCurrency(total) }}</p>
+                                </div>
+                            </div>
+
+                            <div class="mt-8 flex justify-end">
+                                <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
+                                    Buat Pesanan
+                                </PrimaryButton>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </AppLayout>
 </template>
