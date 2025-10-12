@@ -8,13 +8,14 @@ use Inertia\Middleware;
 class HandleInertiaRequests extends Middleware
 {
     /**
-     * Blade view root untuk Inertia.
-     * Pastikan ada resources/views/app.blade.php
+     * The root template that is loaded on the first page visit.
+     *
+     * @var string
      */
     protected $rootView = 'app';
-    
+
     /**
-     * Versi aset untuk cache-busting (biarkan default).
+     * Determine the current asset version.
      */
     public function version(Request $request): ?string
     {
@@ -22,26 +23,17 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * Data yang dishare ke semua halaman Inertia.
-     * DI SINI tempat function share(), JANGAN di file lain.
+     * Define the props that are shared by default.
+     *
+     * @return array<string, mixed>
      */
     public function share(Request $request): array
     {
-        return array_merge(parent::share($request), [
+        return [
+            ...parent::share($request),
             'auth' => [
-                'user' => $request->user()
-                    ? $request->user()->only('id','name','email','role')
-                    : null,
-                'orders_count' => fn () => $request->user()
-                ? $request->user()->orders()->count()
-                : 0,
-           
+                'user' => $request->user(),
             ],
-            'flash' => [
-                'ok' => fn () => $request->session()->get('ok'),
-            ],
-            'csrf_token' => csrf_token(),
-        ]);
+        ];
     }
-    
 }
