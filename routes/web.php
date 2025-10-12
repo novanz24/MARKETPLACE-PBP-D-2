@@ -1,50 +1,59 @@
 <?php
 
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-
-// User
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
-use App\Http\Controllers\OrderController;
+use App\Http\Controllers\Admin;
 
-// Admin
-use App\Http\Controllers\Admin\ProductController as AdminProductController;
-use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
-use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
+|
+*/
 
-// Public
+// Halaman utama (Katalog Produk) untuk semua orang
 Route::get('/', [CatalogController::class, 'index'])->name('home');
 Route::get('/products/{product}', [CatalogController::class, 'show'])->name('products.show');
 
-// User area (auth)
+// Rute Dashboard bawaan Laravel, ini akan berfungsi kembali
+Route::get('/dashboard', function () {
+    return Inertia::render('Dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
+
+// Rute yang memerlukan login
 Route::middleware('auth')->group(function () {
-    // Cart
-    Route::get('/cart', [CartController::class,'index'])->name('cart.index');
-    Route::post('/cart/items', [CartController::class,'add'])->name('cart.items.add');
-    Route::patch('/cart/items/{item}', [CartController::class,'update'])->name('cart.items.update');
-    Route::delete('/cart/items/{item}', [CartController::class,'destroy'])->name('cart.items.destroy');
+    // Profile
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Checkout & Orders
-    Route::get('/checkout', [CheckoutController::class,'form'])->name('checkout.form');
-    Route::post('/checkout', [CheckoutController::class,'store'])->name('checkout.store');
+    // Keranjang (Cart)
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+    Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+    Route::patch('/cart/update/{item}', [CartController::class, 'update'])->name('cart.update');
+    Route::delete('/cart/destroy/{item}', [CartController::class, 'destroy'])->name('cart.destroy');
 
-    Route::get('/orders', [OrderController::class,'index'])->name('orders.index');
-    Route::get('/orders/{order}', [OrderController::class,'show'])->name('orders.show');
+    // Checkout
+    Route::get('/checkout', [CheckoutController::class, 'form'])->name('checkout.form');
+    Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 });
 
-// Admin (auth + gate)
-Route::middleware(['auth','can:admin-area'])
-    ->prefix('admin')->name('admin.')->group(function () {
-        Route::resource('products', AdminProductController::class);
-        Route::resource('categories', AdminCategoryController::class)->only(['index','store','update','destroy']);
-        Route::get('orders', [AdminOrderController::class,'index'])->name('orders.index');
-        Route::patch('orders/{order}/status', [AdminOrderController::class,'updateStatus'])->name('orders.updateStatus');
-    });
+// Rute khusus Admin
+Route::middleware(['auth', 'can:admin-area'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('products', Admin\ProductController::class)->except(['show']);
+    Route::resource('categories', Admin\CategoryController::class)->except(['show']);
+    // Nanti kita tambahkan rute pesanan di sini
+});
 
-// Dashboard Breeze
-Route::get('/dashboard', fn () => Inertia::render('Dashboard'))
-    ->middleware(['auth','verified'])->name('dashboard');
 
+// Memuat rute autentikasi bawaan
 require __DIR__.'/auth.php';
