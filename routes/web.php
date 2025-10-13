@@ -24,7 +24,7 @@ use App\Http\Controllers\Admin;
 Route::get('/', [CatalogController::class, 'index'])->name('home');
 Route::get('/products/{product}', [CatalogController::class, 'show'])->name('products.show');
 
-// Rute Dashboard bawaan Laravel, ini akan berfungsi kembali
+// Rute Dashboard bawaan Laravel
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -51,7 +51,10 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'can:admin-area'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('products', Admin\ProductController::class)->except(['show']);
     Route::resource('categories', Admin\CategoryController::class)->except(['show']);
-    // Nanti kita tambahkan rute pesanan di sini
+    
+    // Rute untuk Pesanan
+    Route::get('orders', [Admin\OrderController::class, 'index'])->name('orders.index');
+    Route::patch('orders/{order}/status', [Admin\OrderController::class, 'updateStatus'])->name('orders.updateStatus');
 });
 
 
